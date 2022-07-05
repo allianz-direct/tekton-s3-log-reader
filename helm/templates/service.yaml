@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tekton-s3-log-reader.fullname" . }}
+  labels:
+    {{- include "tekton-s3-log-reader.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: exporter
+      protocol: TCP
+      name: exporter
+  selector:
+    {{- include "tekton-s3-log-reader.selectorLabels" . | nindent 4 }}

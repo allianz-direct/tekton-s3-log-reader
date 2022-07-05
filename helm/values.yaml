@@ -1,0 +1,5 @@
+image:
+  repository: YOUR/REPOSITORY/tekton-s3-log-reader
+  pullPolicy: Always
+  tag: "v1.0.0"
+s3BucketName: YOUR_BUCKET_NAME

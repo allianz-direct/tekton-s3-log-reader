@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tekton-s3-log-reader
+description: A Helm chart for tekton s3 log reader
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
