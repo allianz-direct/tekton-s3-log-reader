@@ -19,6 +19,7 @@ spec:
       {{- end }}
       labels:
         {{- include "tekton-s3-log-reader.selectorLabels" . | nindent 8 }}
+        {{- toYaml .Values.labels | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -36,6 +37,10 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.args }}
+          args:
+            {{- toYaml .Values.args | nindent 12 }}
+          {{- end }}
           ports:
             - name: exporter
               containerPort: {{ .Values.service.port }}
