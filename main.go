@@ -70,6 +70,7 @@ func main() {
 	tls := flag.Bool("tls", false, "Use TLS to expose endpoint")
 	serverCert := flag.String("cert", "", "TLS Certificate")
 	serverKey := flag.String("key", "", "TLS Key")
+	containerd := flag.Bool("containerd", false, "Use containerd log format")
 
 	flag.Parse()
 
@@ -93,7 +94,12 @@ func main() {
 					fmt.Printf("%s", err)
 					continue
 				}
-				fmt.Fprintf(w, logPayload.Log)
+				if *containerd {
+					// Due a containerd log format we need to add a \n for each line writed
+					fmt.Fprintln(w, logPayload.Log)
+				} else {
+					fmt.Fprintf(w, logPayload.Log)
+				}
 			}
 		}
 	})

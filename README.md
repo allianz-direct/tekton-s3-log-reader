@@ -17,6 +17,8 @@ Usage of ./tekton-s3-log-reader:
     	Bucket name or S3_BUCKET_NAME env var
   -cert string
     	TLS Certificate
+  -containerd
+    	Use containerd log format
   -key string
     	TLS Key
   -p string
@@ -32,6 +34,7 @@ tekton-s3-log-reader has `/metrics` endpoint to monitor the behaviour using Prom
 
 ## Sample stack configuration
 ### FluentBit Configuration
+#### Docker
 ```yaml
 customParsers: |
     [PARSER]
@@ -70,14 +73,65 @@ outputs: |
         Name            s3
         Alias           s3_tekton_logs
         Match           kube.tekton.*
-        bucket          eks-infra-tekton-logs
+        bucket          YOUR_BUCKER
         region          eu-central-1
         total_file_size 250M
         upload_timeout  1m
         s3_key_format   /$TAG[2]/$TAG[3]/$TAG[4]/%Y%m%d%H%M%S.log
         s3_key_format_tag_delimiters .
 ```
-
+#### Containerd
+```yaml
+customParsers: |
+    [PARSER]
+        # http://rubular.com/r/tjUt3Awgg4
+        Name cri-custom
+        Format regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+filters: |
+    [FILTER]
+        Name kubernetes
+        Match kube.*
+        Merge_Log On
+        Keep_Log Off
+        K8S-Logging.Parser On
+        K8S-Logging.Exclude On
+        Buffer_Size 64K
+        # Merge_Log_Key    log_processed
+    [FILTER]
+        Name record_modifier
+        Match kube.*
+        Remove_key logtag
+        Remove_key stream
+inputs: |
+    [INPUT]
+        Name              tail
+        Alias             tekton-semantic
+        Path              /var/log/containers/*_build-release_*
+        Parser            cri-custom
+        Tag               kube.tekton.<namespace_name>.<pod_name>.<container_name>
+        Tag_Regex         (?<pod_name>[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-
+        Mem_Buf_Limit     100MB
+        Refresh_Interval  60
+        #DB                /fluentbit/db/tail.tekton.db
+        # the database is accessed only by Fluent Bit
+        #DB.locking        True
+        # Skip_Long_Lines On
+outputs: |
+    
+    [OUTPUT]
+        Name            s3
+        Alias           s3_tekton_logs
+        Match           kube.tekton.*
+        bucket          YOUR_BUCKER
+        region          eu-central-1
+        total_file_size 250M
+        upload_timeout  1m
+        s3_key_format   /$TAG[2]/$TAG[3]/$TAG[4]/%Y%m%d%H%M%S.log
+        s3_key_format_tag_delimiters .
+```
 ### Tekton Dashboard Configuration
 
 Add the following flag pointing to the endpoint `tekton-s3-log-reader`: 
