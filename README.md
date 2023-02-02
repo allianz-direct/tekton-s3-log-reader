@@ -50,21 +50,19 @@ customParsers: |
         Decode_Field_As   json       log
 filters: |
     [FILTER]
-        Name kubernetes
-        Match kube.*
-        Merge_Log On
-        Keep_Log Off
-        K8S-Logging.Parser On
-        K8S-Logging.Exclude On
-        Buffer_Size 64K
-        # Merge_Log_Key    log_processed
+        Name record_modifier
+        Match tekton.*
+        Remove_key stream
+        Remove_key stdout
+        Remove_key time
+        Remove_key date
 input: |
     [INPUT]
         Name              tail
         Alias             tekton-semantic
         Path              /var/log/containers/*_build-release_*
         Parser            docker-custom
-        Tag               kube.tekton.<namespace_name>.<pod_name>.<container_name>
+        Tag               tekton.<namespace_name>.<pod_name>.<container_name>
         Tag_Regex         (?<pod_name>[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-
         Mem_Buf_Limit     100MB
         Refresh_Interval  60
@@ -72,12 +70,12 @@ outputs: |
     [OUTPUT]
         Name            s3
         Alias           s3_tekton_logs
-        Match           kube.tekton.*
-        bucket          YOUR_BUCKER
+        Match           tekton.*
+        bucket          YOUR_BUCKET
         region          eu-central-1
         total_file_size 250M
         upload_timeout  1m
-        s3_key_format   /$TAG[2]/$TAG[3]/$TAG[4]/%Y%m%d%H%M%S.log
+        s3_key_format   /$TAG[1]/$TAG[2]/$TAG[3]/%Y%m%d%H%M%S.log
         s3_key_format_tag_delimiters .
 ```
 #### Containerd
@@ -92,17 +90,8 @@ customParsers: |
         Time_Format %Y-%m-%dT%H:%M:%S.%L%z
 filters: |
     [FILTER]
-        Name kubernetes
-        Match kube.*
-        Merge_Log On
-        Keep_Log Off
-        K8S-Logging.Parser On
-        K8S-Logging.Exclude On
-        Buffer_Size 64K
-        # Merge_Log_Key    log_processed
-    [FILTER]
         Name record_modifier
-        Match kube.*
+        Match tekton.*
         Remove_key logtag
         Remove_key stream
 inputs: |
@@ -111,7 +100,7 @@ inputs: |
         Alias             tekton-semantic
         Path              /var/log/containers/*_build-release_*
         Parser            cri-custom
-        Tag               kube.tekton.<namespace_name>.<pod_name>.<container_name>
+        Tag               tekton.<namespace_name>.<pod_name>.<container_name>
         Tag_Regex         (?<pod_name>[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-
         Mem_Buf_Limit     100MB
         Refresh_Interval  60
@@ -124,12 +113,12 @@ outputs: |
     [OUTPUT]
         Name            s3
         Alias           s3_tekton_logs
-        Match           kube.tekton.*
-        bucket          YOUR_BUCKER
+        Match           tekton.*
+        bucket          YOUR_BUCKET
         region          eu-central-1
         total_file_size 250M
         upload_timeout  1m
-        s3_key_format   /$TAG[2]/$TAG[3]/$TAG[4]/%Y%m%d%H%M%S.log
+        s3_key_format   /$TAG[1]/$TAG[2]/$TAG[3]/%Y%m%d%H%M%S.log
         s3_key_format_tag_delimiters .
 ```
 ### Tekton Dashboard Configuration
