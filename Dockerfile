@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/golang:1.17-alpine as builder
+FROM public.ecr.aws/docker/library/golang:1.21-alpine as builder
 WORKDIR /
 ADD go.mod go.sum main.go /
 ENV CGO_ENABLED=0
